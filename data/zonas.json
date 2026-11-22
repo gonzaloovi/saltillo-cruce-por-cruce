@@ -1,0 +1,122 @@
+[
+ {
+  "titulo": "Periférico Luis Echeverría y Jesús Valdés Sánchez",
+  "lon": -100.97199,
+  "lat": 25.43412,
+  "nota": "El punto más denso de 2025: tres veces más accidentes que en 2024 en un radio de 250 m.",
+  "2024": {
+   "n": 5,
+   "heridos": 2,
+   "muertos": 1,
+   "moto": 0,
+   "peaton": 0
+  },
+  "2025": {
+   "n": 17,
+   "heridos": 15,
+   "muertos": 0,
+   "moto": 3,
+   "peaton": 0
+  }
+ },
+ {
+  "titulo": "Otilio González y Periférico Luis Echeverría",
+  "lon": -100.97894,
+  "lat": 25.40752,
+  "nota": "Único cruce de Otilio que aumentó; aquí ocurrió el accidente fatal de la calle en 2025.",
+  "2024": {
+   "n": 3,
+   "heridos": 2,
+   "muertos": 0,
+   "moto": 0,
+   "peaton": 0
+  },
+  "2025": {
+   "n": 6,
+   "heridos": 7,
+   "muertos": 1,
+   "moto": 1,
+   "peaton": 0
+  }
+ },
+ {
+  "titulo": "Periférico Luis Echeverría y Benito Juárez",
+  "lon": -100.99114,
+  "lat": 25.38809,
+  "nota": "Mismo número de accidentes, pero en 2025 fueron mucho más graves: 12 heridos y 2 muertos.",
+  "2024": {
+   "n": 4,
+   "heridos": 0,
+   "muertos": 0,
+   "moto": 1,
+   "peaton": 0
+  },
+  "2025": {
+   "n": 4,
+   "heridos": 12,
+   "muertos": 2,
+   "moto": 0,
+   "peaton": 1
+  }
+ },
+ {
+  "titulo": "Francisco Coss y Mariano Abasolo",
+  "lon": -100.98712,
+  "lat": 25.42944,
+  "nota": "En el centro: de 2 accidentes en 2024 a 7 en 2025, uno de ellos con un peatón.",
+  "2024": {
+   "n": 2,
+   "heridos": 0,
+   "muertos": 0,
+   "moto": 0,
+   "peaton": 0
+  },
+  "2025": {
+   "n": 7,
+   "heridos": 4,
+   "muertos": 0,
+   "moto": 0,
+   "peaton": 1
+  }
+ },
+ {
+  "titulo": "Venustiano Carranza y Campanares",
+  "lon": -100.96912,
+  "lat": 25.48984,
+  "nota": "Uno de los cruces que más pierde peso en 2025.",
+  "2024": {
+   "n": 9,
+   "heridos": 3,
+   "muertos": 1,
+   "moto": 2,
+   "peaton": 0
+  },
+  "2025": {
+   "n": 4,
+   "heridos": 1,
+   "muertos": 0,
+   "moto": 1,
+   "peaton": 0
+  }
+ },
+ {
+  "titulo": "Periférico Luis Echeverría y Fundadores",
+  "lon": -100.96982,
+  "lat": 25.42746,
+  "nota": "Concentración constante en ambos años; en 2025, con el triple de heridos.",
+  "2024": {
+   "n": 11,
+   "heridos": 4,
+   "muertos": 0,
+   "moto": 0,
+   "peaton": 0
+  },
+  "2025": {
+   "n": 10,
+   "heridos": 13,
+   "muertos": 0,
+   "moto": 0,
+   "peaton": 0
+  }
+ }
+]

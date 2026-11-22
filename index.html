@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Saltillo, cruce por cruce · Accidentes de tránsito 2024–2025</title>
+<meta name="description" content="Mapa interactivo de los accidentes de tránsito georreferenciados por INEGI en Saltillo, Coahuila, 2024 y 2025.">
+<meta property="og:title" content="Saltillo, cruce por cruce">
+<meta property="og:description" content="Explora dónde ocurren los accidentes de tránsito en Saltillo y cómo cambiaron de 2024 a 2025.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<style>
+:root{
+  --papel:#f6f3ee; --tinta:#1d1b19; --gris:#6b665f; --linea:#ddd6cc;
+  --rojo:#b2182b; --rojo2:#d6604d; --azul:#2166ac; --ambar:#f4a582;
+  --serif:'Fraunces',Georgia,'Times New Roman',serif; --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--papel);color:var(--tinta);font-family:var(--sans);font-size:17px;line-height:1.55}
+a{color:var(--rojo)}
+nav.top{position:sticky;top:0;z-index:20;display:flex;gap:22px;align-items:center;padding:12px 28px;background:rgba(246,243,238,.94);backdrop-filter:blur(6px);border-bottom:1px solid var(--linea);font-size:14px}
+nav.top .marca{font-family:var(--serif);font-weight:700;font-size:17px;margin-right:auto;text-decoration:none;color:var(--tinta)}
+nav.top a{color:var(--gris);text-decoration:none}
+nav.top a:hover{color:var(--tinta)}
+section{padding:72px 28px;scroll-margin-top:49px}
+.ancho{max-width:1080px;margin:0 auto}
+.estrecho{max-width:700px;margin:0 auto}
+h1,h2,h3{font-family:var(--serif);font-weight:700;line-height:1.12;margin:0 0 .5em}
+h1{font-size:clamp(40px,7vw,82px);letter-spacing:-.01em}
+h2{font-size:clamp(28px,4vw,42px)}
+h3{font-size:21px}
+.antetitulo{text-transform:uppercase;letter-spacing:.12em;font-size:12px;font-weight:600;color:var(--rojo);margin-bottom:14px}
+.entrada{font-size:clamp(18px,2.2vw,22px);color:#3d3934;max-width:720px}
+#inicio{min-height:86vh;display:flex;align-items:center;padding-top:40px;
+  background:radial-gradient(1200px 600px at 85% 30%,rgba(214,96,77,.13),transparent 60%),radial-gradient(900px 500px at 10% 90%,rgba(33,102,172,.08),transparent 60%)}
+.cifras{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;margin:42px 0 36px;max-width:960px}
+.cifra{border-top:2px solid var(--tinta);padding-top:10px}
+.cifra b{display:block;font-family:var(--serif);font-size:44px;line-height:1}
+.cifra span{font-size:14px;color:var(--gris)}
+.boton{display:inline-block;background:var(--tinta);color:#fff;padding:13px 22px;border-radius:999px;text-decoration:none;font-weight:600;font-size:15px;border:0;cursor:pointer}
+.boton.sec{background:transparent;color:var(--tinta);border:1.5px solid var(--tinta);margin-left:8px}
+.aviso{font-size:14px;color:var(--gris);margin-top:22px;max-width:640px}
+
+/* MAPA */
+#mapa{padding:0;position:relative;border-top:1px solid var(--linea);border-bottom:1px solid var(--linea)}
+.mapa-wrap{display:grid;grid-template-columns:340px 1fr;height:calc(100vh - 49px);min-height:560px}
+#panel{background:#fff;border-right:1px solid var(--linea);overflow-y:auto;padding:22px 22px 30px;font-size:14px}
+#panel h2{font-size:24px;margin-bottom:6px}
+#panel .sub{color:var(--gris);margin:0 0 18px}
+.grupo{margin:0 0 20px}
+.grupo>label.tit{display:block;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--gris);margin-bottom:8px}
+.segmentos{display:flex;flex-wrap:wrap;gap:6px}
+.segmentos button{border:1px solid var(--linea);background:#fff;border-radius:999px;padding:6px 11px;font:inherit;font-size:13px;cursor:pointer;color:var(--tinta)}
+.segmentos button.on{background:var(--tinta);border-color:var(--tinta);color:#fff}
+select,input[type=search]{width:100%;font:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--linea);border-radius:8px;background:#fff;color:var(--tinta)}
+.contador{background:var(--papel);border-radius:10px;padding:12px 14px;margin:4px 0 18px}
+.contador b{font-family:var(--serif);font-size:28px}
+.leyenda{margin-top:6px}
+.leyenda .fila{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:13px}
+.punto{width:11px;height:11px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.25)}
+.barra{height:10px;border-radius:5px;margin:6px 0 3px}
+.barra-et{display:flex;justify-content:space-between;font-size:12px;color:var(--gris)}
+.resumen-calle{border-left:3px solid var(--rojo);padding:8px 12px;background:#fdf8f6;margin-top:10px;display:none}
+.resumen-calle table{border-collapse:collapse;width:100%;font-size:13px;margin-top:6px}
+.resumen-calle td,.resumen-calle th{padding:3px 4px;text-align:right}
+.resumen-calle td:first-child,.resumen-calle th:first-child{text-align:left}
+.limpiar{background:none;border:0;color:var(--rojo);font:inherit;font-size:13px;cursor:pointer;padding:0;margin-top:6px}
+#map{width:100%;height:100%}
+.maplibregl-popup-content{font-family:var(--sans);font-size:13.5px;line-height:1.45;border-radius:10px;padding:12px 14px;max-width:260px}
+.pop-t{font-family:var(--serif);font-weight:700;font-size:16px;margin-bottom:4px}
+.pop-g{display:inline-block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:2px 7px;border-radius:999px;margin-bottom:6px}
+.toggle-panel{display:none}
+
+/* ZONAS */
+.tarjetas{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;margin-top:30px}
+.tarjeta{background:#fff;border:1px solid var(--linea);border-radius:14px;padding:20px;display:flex;flex-direction:column}
+.tarjeta h3{font-size:19px}
+.tarjeta p{font-size:15px;color:#3d3934;margin:0 0 14px}
+.comp{display:grid;grid-template-columns:auto 1fr 1fr;gap:4px 12px;font-size:14px;margin-bottom:16px}
+.comp .h{font-size:12px;color:var(--gris);font-weight:600}
+.comp .n{font-family:var(--serif);font-size:20px;text-align:right}
+.comp .l{color:var(--gris)}
+.comp .sube{color:var(--rojo)} .comp .baja{color:var(--azul)}
+.tarjeta .boton{margin-top:auto;align-self:flex-start;padding:9px 16px;font-size:14px}
+
+/* TEXTO */
+.texto p{margin:0 0 1.1em}
+.texto h3{margin-top:1.6em}
+.nota{background:#fff;border:1px solid var(--linea);border-radius:12px;padding:18px 20px;font-size:15px}
+footer{padding:40px 28px 60px;border-top:1px solid var(--linea);font-size:14px;color:var(--gris)}
+
+@media (max-width:820px){
+  nav.top{gap:14px;padding:10px 16px;overflow-x:auto;white-space:nowrap}
+  section{padding:56px 18px}
+  .mapa-wrap{grid-template-columns:1fr;height:calc(100svh - 45px)}
+  #panel{position:absolute;left:0;right:0;bottom:0;z-index:5;max-height:62%;border-right:0;border-top:1px solid var(--linea);border-radius:16px 16px 0 0;box-shadow:0 -6px 20px rgba(0,0,0,.12);transform:translateY(calc(100% - 58px));transition:transform .25s}
+  #panel.abierto{transform:none}
+  .toggle-panel{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:0;font:inherit;font-weight:600;padding:2px 0 14px;cursor:pointer;color:var(--tinta)}
+  .boton.sec{margin-left:0;margin-top:10px}
+  .cifras{grid-template-columns:repeat(2,1fr)}
+  section{scroll-margin-top:45px}
+}
+</style>
+</head>
+<body>
+
+<nav class="top">
+  <a class="marca" href="#inicio">Saltillo, cruce por cruce</a>
+  <a href="#mapa">Mapa</a>
+  <a href="#zonas">Zonas</a>
+  <a href="#como-leer">Cómo leerlo</a>
+  <a href="#metodo">Método y datos</a>
+</nav>
+
+<section id="inicio">
+  <div class="ancho">
+    <div class="antetitulo">Accidentes de tránsito · Saltillo, Coahuila · 2024–2025</div>
+    <h1>Saltillo,<br>cruce por cruce</h1>
+    <p class="entrada">Cada punto de este mapa es un accidente de tránsito registrado por INEGI en la ciudad. Explora dónde se concentran, qué tan graves son y qué zonas cambiaron de un año a otro.</p>
+    <div class="cifras">
+      <div class="cifra"><b>738</b><span>accidentes georreferenciados en 2024</span></div>
+      <div class="cifra"><b>439</b><span>accidentes georreferenciados en 2025</span></div>
+      <div class="cifra"><b>19</b><span>personas muertas cada año en estos registros</span></div>
+      <div class="cifra"><b>×3</b><span>aumento en Periférico Echeverría y Valdés Sánchez</span></div>
+    </div>
+    <a class="boton" href="#mapa">Explorar el mapa ↓</a>
+    <a class="boton sec" href="#como-leer">Antes de empezar: cómo leerlo</a>
+    <p class="aviso">La baja de 2025 no significa necesariamente menos accidentes: probablemente se georreferenciaron menos. Por eso, para comparar años, el mapa usa la <em>participación</em> de cada zona en el total anual.</p>
+  </div>
+</section>
+
+<section id="mapa">
+  <div class="mapa-wrap">
+    <aside id="panel" aria-label="Controles del mapa">
+      <button class="toggle-panel" id="togglePanel" aria-expanded="false"><span>Capas y filtros</span><span id="toggleFlecha">▲</span></button>
+      <h2>Explora el mapa</h2>
+      <p class="sub">Toca un punto para ver el detalle del accidente.</p>
+
+      <div class="grupo">
+        <label class="tit">Qué ver</label>
+        <div class="segmentos" id="capa">
+          <button data-v="puntos" class="on">Accidentes</button>
+          <button data-v="calor2024">Calor 2024</button>
+          <button data-v="calor2025">Calor 2025</button>
+          <button data-v="cambio">Cambio 2024→2025</button>
+        </div>
+      </div>
+
+      <div class="contador" id="contador"><b id="cuenta">–</b> accidentes visibles<br><span id="cuentaDet" style="color:var(--gris)"></span></div>
+
+      <div class="grupo">
+        <label class="tit">Año</label>
+        <div class="segmentos" id="anio">
+          <button data-v="todos" class="on">Ambos</button>
+          <button data-v="2024">2024</button>
+          <button data-v="2025">2025</button>
+        </div>
+      </div>
+      <div class="grupo">
+        <label class="tit">Gravedad</label>
+        <div class="segmentos" id="clase">
+          <button data-v="todos" class="on">Todas</button>
+          <button data-v="1">Fatales</button>
+          <button data-v="2">Con heridos</button>
+          <button data-v="3">Solo daños</button>
+        </div>
+      </div>
+      <div class="grupo">
+        <label class="tit">Involucra</label>
+        <div class="segmentos" id="inv">
+          <button data-v="todos" class="on">Todos</button>
+          <button data-v="mo">Motocicleta</button>
+          <button data-v="pe">Peatón</button>
+          <button data-v="bi">Bicicleta</button>
+        </div>
+      </div>
+      <div class="grupo">
+        <label class="tit" for="hora">Hora del día</label>
+        <select id="hora">
+          <option value="todos">Todo el día</option>
+          <option value="0-5">Madrugada (0 a 5 h)</option>
+          <option value="6-11">Mañana (6 a 11 h)</option>
+          <option value="12-17">Tarde (12 a 17 h)</option>
+          <option value="18-23">Noche (18 a 23 h)</option>
+        </select>
+      </div>
+      <div class="grupo">
+        <label class="tit" for="calle">Buscar una calle</label>
+        <input type="search" id="calle" list="calles" placeholder="Ej. Otilio González" autocomplete="off">
+        <datalist id="calles"></datalist>
+        <div class="resumen-calle" id="resCalle"></div>
+      </div>
+
+      <div class="grupo">
+        <label class="tit">Leyenda</label>
+        <div class="leyenda" id="leyenda"></div>
+      </div>
+    </aside>
+    <div id="map" role="region" aria-label="Mapa de accidentes de tránsito en Saltillo"></div>
+  </div>
+</section>
+
+<section id="zonas">
+  <div class="ancho">
+    <div class="antetitulo">Zonas a mirar</div>
+    <h2>Seis cruces que cuentan la historia</h2>
+    <p class="entrada">Conteos en un radio de 250 metros alrededor de cada cruce. Son números pequeños: un par de accidentes mueve mucho las cifras, pero los patrones que se repiten importan.</p>
+    <div class="tarjetas" id="tarjetas"></div>
+  </div>
+</section>
+
+<section id="como-leer">
+  <div class="estrecho texto">
+    <div class="antetitulo">Cómo leerlo</div>
+    <h2>Tres capas, tres preguntas</h2>
+    <h3>Accidentes: ¿dónde pasó cada uno?</h3>
+    <p>Cada punto es un accidente. El color indica la gravedad: negro para los fatales, rojo para los que dejaron heridos y amarillo para los que solo causaron daños materiales. INEGI ubica cada accidente en el cruce de dos calles, por eso muchos puntos se apilan en las intersecciones.</p>
+    <h3>Calor: ¿dónde se concentran?</h3>
+    <p>Las capas de calor suavizan los puntos para mostrar dónde se acumulan. No todos pesan igual: un accidente fatal cuenta 10, uno con heridos 3 y uno con solo daños 1. Así, el calor señala dónde se concentra el <em>daño</em>, no solo el número de choques. Ambos años usan la misma escala de color.</p>
+    <h3>Cambio: ¿qué zonas pesan más en 2025?</h3>
+    <p>Rojo significa que la zona concentra una parte mayor del total de 2025 que del de 2024; azul, una parte menor. Se compara la participación porque 2025 tiene muchos menos registros georreferenciados, y comparar números absolutos haría que casi toda la ciudad apareciera en azul.</p>
+    <div class="nota"><b>Limitaciones.</b> Estos son solo los accidentes que INEGI pudo georreferenciar, no todos los que ocurrieron. La caída de 738 a 439 registros probablemente refleja menor cobertura en 2025. Un solo accidente fatal puede marcar una zona en las capas de calor y de cambio; las más robustas son las que también cambian en número de accidentes.</div>
+  </div>
+</section>
+
+<section id="metodo">
+  <div class="estrecho texto">
+    <div class="antetitulo">Método y datos</div>
+    <h2>De dónde salen los datos</h2>
+    <p><b>Fuente:</b> INEGI, <i>Accidentes de Tránsito Terrestre en Zonas Urbanas y Suburbanas</i> (ATUS), base municipal georreferenciada 2024 y 2025. Se usaron los registros con clave de municipio 030 (Saltillo).</p>
+    <p><b>Capas de calor:</b> densidad de kernel cuártico con radio de 400 m y celdas de 10 m, ponderada por gravedad (fatal 10, con heridos 3, solo daños 1). <b>Cambio:</b> cada año se divide entre su peso total y se resta 2024 de 2025 (puntos porcentuales por km²).</p>
+    <p><b>Mapa base:</b> OpenFreeMap, © OpenMapTiles, © colaboradores de OpenStreetMap.</p>
+    <p><a href="data/accidentes.geojson" download>Descargar los datos del mapa (GeoJSON)</a></p>
+  </div>
+</section>
+
+<footer>
+  <div class="estrecho">Elaboración: Gonzalo Villanueva Ibarra. Datos de INEGI (ATUS 2024 y 2025). Sitio de consulta; los conteos reflejan solo los registros georreferenciados.</div>
+</footer>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+const COLORES = {1:'#1d1b19', 2:'#d6604d', 3:'#f2c75c'};
+const NOMBRE_CLASE = {1:'Fatal', 2:'Con heridos', 3:'Solo daños'};
+const estado = {capa:'puntos', anio:'todos', clase:'todos', inv:'todos', hora:'todos', calle:''};
+let DATOS = null, CAPAS = null, ZONAS = null;
+
+const norm = s => (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()
+  .replace(/^(boulevard|blvd\.?|bulevar|avenida|av\.?|calzada|calle|prolongacion|carretera|periferico)\s+/,'').trim();
+
+const map = new maplibregl.Map({
+  container:'map',
+  style:'https://tiles.openfreemap.org/styles/positron',
+  center:[-100.985,25.43], zoom:11.6, minZoom:10, maxZoom:18,
+  attributionControl:{compact:true}
+});
+map.addControl(new maplibregl.NavigationControl({showCompass:false}),'top-right');
+map.addControl(new maplibregl.FullscreenControl(),'top-right');
+
+Promise.all([
+  fetch('data/accidentes.geojson').then(r=>r.json()),
+  fetch('data/capas.json').then(r=>r.json()),
+  fetch('data/zonas.json').then(r=>r.json()),
+  new Promise(res=>map.on('load',res))
+]).then(([d,c,z])=>{
+  DATOS=d; CAPAS=c; ZONAS=z;
+  iniciarMapa(); iniciarCalles(); pintarZonas(); aplicar();
+});
+
+function iniciarMapa(){
+  const primeraEtiqueta = (map.getStyle().layers.find(l=>l.type==='symbol')||{}).id;
+  for (const k of ['calor2024','calor2025','cambio']){
+    map.addSource(k,{type:'image',url:`img/${k}.webp`,coordinates:CAPAS[k]});
+    map.addLayer({id:k,type:'raster',source:k,layout:{visibility:'none'},
+      paint:{'raster-opacity':0.88,'raster-resampling':'linear','raster-fade-duration':0}}, primeraEtiqueta);
+  }
+  map.addSource('acc',{type:'geojson',data:DATOS});
+  map.addLayer({id:'acc',type:'circle',source:'acc',paint:{
+    'circle-color':['match',['get','c'],1,COLORES[1],2,COLORES[2],COLORES[3]],
+    'circle-radius':['interpolate',['linear'],['zoom'],10,['match',['get','c'],1,4,2,3,2.4],14,['match',['get','c'],1,8,2,6,5],17,['match',['get','c'],1,12,2,9,8]],
+    'circle-stroke-color':'#fff','circle-stroke-width':['interpolate',['linear'],['zoom'],10,0.4,15,1.2],
+    'circle-opacity':0.9
+  }});
+  map.on('click','acc',e=>{
+    const p=e.features[0].properties;
+    const cruce=[p.c1,p.c2].filter(Boolean).join(' y ')||'Sin calle registrada';
+    const hora=p.h>=0?`${String(p.h).padStart(2,'0')}:${String(p.mi).padStart(2,'0')} h`:'hora no registrada';
+    const fecha=p.f?new Date(p.f+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'}):'';
+    const extra=[p.mo?'motocicleta':'',p.pe?'peatón':'',p.bi?'bicicleta':''].filter(Boolean);
+    const col=COLORES[p.c];
+    new maplibregl.Popup({offset:8}).setLngLat(e.features[0].geometry.coordinates).setHTML(
+      `<span class="pop-g" style="background:${col};color:${p.c===3?'#1d1b19':'#fff'}">${NOMBRE_CLASE[p.c]}</span>
+       <div class="pop-t">${cruce}</div>
+       <div>${p.d?p.d+' ':''}${fecha} · ${hora}</div>
+       <div>${p.t}${extra.length?' · involucra '+extra.join(', '):''}</div>
+       ${(p.he||p.m)?`<div><b>${p.he} herido${p.he===1?'':'s'}</b>${p.m?` · <b>${p.m} muerto${p.m===1?'':'s'}</b>`:''}</div>`:''}`
+    ).addTo(map);
+  });
+  map.on('mouseenter','acc',()=>map.getCanvas().style.cursor='pointer');
+  map.on('mouseleave','acc',()=>map.getCanvas().style.cursor='');
+}
+
+function filtroExpr(){
+  const f=['all'];
+  if(estado.anio!=='todos') f.push(['==',['get','a'],+estado.anio]);
+  if(estado.clase!=='todos') f.push(['==',['get','c'],+estado.clase]);
+  if(estado.inv!=='todos') f.push(['==',['get',estado.inv],1]);
+  if(estado.hora!=='todos'){const [a,b]=estado.hora.split('-').map(Number); f.push(['>=',['get','h'],a],['<=',['get','h'],b]);}
+  return f;
+}
+function pasa(p){
+  if(estado.anio!=='todos' && p.a!==+estado.anio) return false;
+  if(estado.clase!=='todos' && p.c!==+estado.clase) return false;
+  if(estado.inv!=='todos' && p[estado.inv]!==1) return false;
+  if(estado.hora!=='todos'){const [a,b]=estado.hora.split('-').map(Number); if(p.h<a||p.h>b) return false;}
+  return true;
+}
+function deCalle(p,q){ return q && (norm(p.c1).includes(q) || norm(p.c2).includes(q)); }
+
+function aplicar(){
+  if(!DATOS) return;
+  const q=norm(estado.calle);
+  let lista=DATOS.features.filter(f=>pasa(f.properties));
+  if(q){
+    // la búsqueda ignora acentos y prefijos (Blvd., Av.), así que se filtra en JavaScript
+    lista=lista.filter(f=>deCalle(f.properties,q));
+    map.getSource('acc').setData({type:'FeatureCollection',features:lista}); map.setFilter('acc',null);
+  } else { map.getSource('acc').setData(DATOS); map.setFilter('acc',filtroExpr()); }
+
+  const ver = estado.capa==='puntos';
+  map.setLayoutProperty('acc','visibility','visible');
+  map.setPaintProperty('acc','circle-opacity', ver?0.9:0.55);
+  for(const k of ['calor2024','calor2025','cambio']) map.setLayoutProperty(k,'visibility',estado.capa===k?'visible':'none');
+
+  const n=lista.length, her=lista.reduce((s,f)=>s+f.properties.he,0), mue=lista.reduce((s,f)=>s+f.properties.m,0);
+  const n24=lista.filter(f=>f.properties.a===2024).length, n25=n-n24;
+  document.getElementById('cuenta').textContent=n.toLocaleString('es-MX');
+  document.getElementById('cuentaDet').textContent=`${n24} en 2024 · ${n25} en 2025 · ${her} heridos · ${mue} muertos`;
+  pintarLeyenda(); resumenCalle(q);
+}
+
+function pintarLeyenda(){
+  const el=document.getElementById('leyenda'); let h='';
+  h+=[1,2,3].map(c=>`<div class="fila"><span class="punto" style="background:${COLORES[c]}"></span>${NOMBRE_CLASE[c]}</div>`).join('');
+  if(estado.capa.startsWith('calor')) h+=`<div style="margin-top:10px;font-weight:600">Concentración ponderada por gravedad</div>
+    <div class="barra" style="background:linear-gradient(90deg,#fff7c4,#fecc5c,#fd8d3c,#f03b20,#bd0026)"></div><div class="barra-et"><span>Baja</span><span>Alta</span></div>`;
+  if(estado.capa==='cambio') h+=`<div style="margin-top:10px;font-weight:600">Cambio de participación 2024→2025</div>
+    <div class="barra" style="background:linear-gradient(90deg,#2166ac,#67a9cf,#f7f7f7,#ef8a62,#b2182b)"></div><div class="barra-et"><span>Pierde peso</span><span>Gana peso</span></div>`;
+  el.innerHTML=h;
+}
+
+function iniciarCalles(){
+  const cuenta={};
+  for(const f of DATOS.features) for(const c of [f.properties.c1,f.properties.c2]) if(c) cuenta[c]=(cuenta[c]||0)+1;
+  const top=Object.entries(cuenta).filter(([,n])=>n>=2).sort((a,b)=>b[1]-a[1]).map(([c])=>c);
+  document.getElementById('calles').innerHTML=top.map(c=>`<option value="${c}">`).join('');
+  const inp=document.getElementById('calle'); let t;
+  inp.addEventListener('input',()=>{clearTimeout(t); t=setTimeout(()=>{estado.calle=inp.value; aplicar(); enfocarCalle();},250);});
+}
+function enfocarCalle(){
+  const q=norm(estado.calle); if(!q) return;
+  const pts=DATOS.features.filter(f=>deCalle(f.properties,q)).map(f=>f.geometry.coordinates);
+  if(!pts.length) return;
+  const b=pts.reduce((b,c)=>b.extend(c),new maplibregl.LngLatBounds(pts[0],pts[0]));
+  map.fitBounds(b,{padding:70,maxZoom:15,duration:900});
+}
+function resumenCalle(q){
+  const el=document.getElementById('resCalle');
+  if(!q){el.style.display='none';return;}
+  const todos=DATOS.features.filter(f=>deCalle(f.properties,q)).map(f=>f.properties);
+  if(!todos.length){el.style.display='block';el.innerHTML='No hay accidentes registrados con ese nombre de calle.';return;}
+  const r=a=>{const s=todos.filter(p=>p.a===a);return {n:s.length,he:s.reduce((x,p)=>x+p.he,0),m:s.reduce((x,p)=>x+p.m,0),mo:s.filter(p=>p.mo).length};};
+  const A=r(2024),B=r(2025);
+  el.style.display='block';
+  el.innerHTML=`<b>${estado.calle}</b> (todos los registros, sin filtros)
+   <table><tr><th></th><th>2024</th><th>2025</th></tr>
+   <tr><td>Accidentes</td><td>${A.n}</td><td>${B.n}</td></tr>
+   <tr><td>Heridos</td><td>${A.he}</td><td>${B.he}</td></tr>
+   <tr><td>Muertos</td><td>${A.m}</td><td>${B.m}</td></tr>
+   <tr><td>Con moto</td><td>${A.mo}</td><td>${B.mo}</td></tr></table>
+   <button class="limpiar" id="limpiarCalle">Quitar búsqueda</button>`;
+  document.getElementById('limpiarCalle').onclick=()=>{document.getElementById('calle').value='';estado.calle='';aplicar();};
+}
+
+function pintarZonas(){
+  const fl=(a,b)=>b>a?'sube':(b<a?'baja':'');
+  document.getElementById('tarjetas').innerHTML=ZONAS.map((z,i)=>{
+    const A=z['2024'],B=z['2025'];
+    return `<article class="tarjeta"><h3>${z.titulo}</h3><p>${z.nota}</p>
+      <div class="comp"><span></span><span class="h" style="text-align:right">2024</span><span class="h" style="text-align:right">2025</span>
+      <span class="l">Accidentes</span><span class="n">${A.n}</span><span class="n ${fl(A.n,B.n)}">${B.n}</span>
+      <span class="l">Heridos</span><span class="n">${A.heridos}</span><span class="n ${fl(A.heridos,B.heridos)}">${B.heridos}</span>
+      <span class="l">Muertos</span><span class="n">${A.muertos}</span><span class="n ${fl(A.muertos,B.muertos)}">${B.muertos}</span></div>
+      <button class="boton" data-z="${i}">Ver en el mapa</button></article>`;}).join('');
+  document.querySelectorAll('[data-z]').forEach(b=>b.onclick=()=>{
+    const z=ZONAS[+b.dataset.z];
+    document.getElementById('mapa').scrollIntoView({behavior:'smooth'});
+    setTimeout(()=>map.flyTo({center:[z.lon,z.lat],zoom:15.3,duration:1400}),350);
+  });
+}
+
+// controles
+for(const id of ['capa','anio','clase','inv']){
+  document.getElementById(id).addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    document.querySelectorAll(`#${id} button`).forEach(x=>x.classList.toggle('on',x===b));
+    estado[id]=b.dataset.v; aplicar();
+  });
+}
+document.getElementById('hora').onchange=e=>{estado.hora=e.target.value;aplicar();};
+const panel=document.getElementById('panel');
+document.getElementById('togglePanel').onclick=()=>{
+  const ab=panel.classList.toggle('abierto');
+  document.getElementById('togglePanel').setAttribute('aria-expanded',ab);
+  document.getElementById('toggleFlecha').textContent=ab?'▼':'▲';
+};
+</script>
+</body>
+</html>
